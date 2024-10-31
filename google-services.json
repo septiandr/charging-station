@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "504743617512",
+    "project_id": "charging-station-7251c",
+    "storage_bucket": "charging-station-7251c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:504743617512:android:104ce6bc9bb12385ea3a5d",
+        "android_client_info": {
+          "package_name": "com.power.route"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAR5yeKMUQzuLKl6SYkcFtnaHzlW_J1ivg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
