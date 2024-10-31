@@ -1,24 +1,27 @@
 {
   "expo": {
-    "name": "charging-station",
-    "slug": "charging-station",
+    "name": "Power Route EV",
+    "slug": "power-route-ev",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/icon-PREV.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/images/splash.png",
+      "image": "./assets/images/PowerRouteEV.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#0A7EA4"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.power.route"
     },
     "android": {
+      "package": "com.power.route",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/images/icon-PREV.png",
+        "backgroundColor": "#0A7EA4"
       }
     },
     "web": {

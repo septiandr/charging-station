@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback, useContext } from 'react';
-import { StyleSheet, Platform, View, FlatList, TextInput, TouchableOpacity, useColorScheme, Text, ActivityIndicator } from 'react-native';
+import { StyleSheet, Platform, View, FlatList, TextInput, TouchableOpacity, useColorScheme, Text, ActivityIndicator, Dimensions, SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/Colors';
 import { ThemedText } from '@/components/ThemedText';
@@ -8,20 +8,19 @@ import MapView from 'react-native-map-clustering';
 import { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
 import * as Linking from 'expo-linking'; // Importing expo-linking
-import { LocationMarker } from '@/assets';
 import { Context } from '../_layout';
-import DATA from '@/assets/data.json'
-import { getDataFromOpenChargeMap } from '@/api/api';
+import {getChargingStation } from '@/api/api';
 import { router } from 'expo-router';
-import { ChargingPoint } from '../props';
+import IconChargingLocation from '@/assets/images';
+import LoginWarningModal from '@/components/modal/LoginWarningModal';
+import LocationList from '@/components/LocationList';
+import { checkUserLoginStatus } from '@/utils/authhelper';
+import { haversineDistance } from '@/utils/heaversineDistance';
+import { renderClusterMarker } from '@/components/cluster';
+import { openLocationInMap, requestLocationPermission } from '@/utils/locationHelper';
+import * as Notifications from 'expo-notifications'; // Import expo-notifications
 
-interface ClusterMarkerProps {
-  count: number;
-  coordinate: {
-    latitude: number;
-    longitude: number;
-  };
-}
+const { height } = Dimensions.get('window');
 
 interface LocationObject {
   id: number;
@@ -31,61 +30,29 @@ interface LocationObject {
   distance?: number;
 }
 
-const renderClusterMarker: React.FC<ClusterMarkerProps> = ({ id, geometry, onPress, properties }: any) => {
-  const points = properties.point_count;
-
-  return (
-    <Marker
-      key={`cluster-${id}`}
-      coordinate={{
-        longitude: geometry.coordinates[0],
-        latitude: geometry.coordinates[1],
-      }}
-      tracksViewChanges={false}
-      onPress={onPress}
-    >
-      <View style={styles.markerContainer}>
-        <LocationMarker/>
-        <View style={styles.pointContainer}>
-          <Text style={styles.pointText}>{points}</Text>
-        </View>
-      </View>
-    </Marker>
-  );
-};
-
-const haversineDistance = (coords1: any, coords2: any) => {
-  const toRad = (x: number) => x * Math.PI / 180;
-  const R = 6371; // Radius of the Earth in km
-
-  const dLat = toRad(coords2.latitude - coords1.latitude);
-  const dLon = toRad(coords2.longitude - coords1.longitude);
-  const lat1 = toRad(coords1.latitude);
-  const lat2 = toRad(coords2.latitude);
-
-  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.sin(dLon / 2) * Math.sin(dLon / 2) * Math.cos(lat1) * Math.cos(lat2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-  return R * c;
-};
-
 export default function HomeScreen() {
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedLocation, setSelectedLocation] = useState<number>();
   const [showList, setShowList] = useState(false);
-  const [filteredLocations, setFilteredLocations] = useState<LocationObject[]>([]);
-  const {state, setState} = useContext(Context)
-  const [listLocations, setListLocations] = useState<LocationObject[]>([])
-  const [responseLocations, setResponseLocations] = useState<ChargingPoint[]>([])
+  const [filteredLocations, setFilteredLocations] = useState<any[]>([]);
+  const { state, setState } = useContext(Context)
+  const [modalLoginWarning, setModalLoginWarning] = useState(false)
+  const [chargingStation, setChargingStation] = useState([]);
+  const hasFetched = useRef(false);
 
   const mapRef = useRef<any>(null);
 
+  useEffect(() => {
+    checkUserLoginStatus(state, setModalLoginWarning)
+  }, [])
 
-  useEffect(()=>{
-    if(state.isClickLocation){
+  const handleLoginPress = () => {
+    router.push('login')
+    setModalLoginWarning(false)
+  }
+
+  useEffect(() => {
+    if (state.isClickLocation) {
       mapRef?.current?.animateToRegion({
         latitude: location?.coords.latitude,
         longitude: location?.coords.longitude,
@@ -93,129 +60,105 @@ export default function HomeScreen() {
         longitudeDelta: 0.005,
       }, 1000);
     }
-  },[state.isClickLocation])
+  }, [state.isClickLocation])
+  const getLocation = async () => {
+    const currentLocation = await requestLocationPermission();
+    if (currentLocation) setLocation(currentLocation);
+  };
 
   useEffect(() => {
-    (async () => {
-      if (Platform.OS === 'android') {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== 'granted') {
-          setErrorMsg('Permission to access location was denied');
-          return;
-        }
-      }
-
-      const location = await Location.getCurrentPositionAsync({});
-      setLocation(location);
-    })();
+    getLocation()
   }, []);
 
   useEffect(() => {
     if (location) {
-      const updatedLocations = listLocations.map((loc: LocationObject) => ({
+      const updatedLocations = chargingStation.map((loc: any) => ({
         ...loc,
-        distance: haversineDistance(location.coords, { latitude: loc.latitude, longitude: loc.longitude }),
+        distance: haversineDistance(location.coords, { 
+          latitude: loc?.addressInfo?.latitude, 
+          longitude: loc?.addressInfo?.longitude 
+        }),
       })).sort((a, b) => a.distance! - b.distance!);
+      
       setFilteredLocations(updatedLocations);
+
+      // Check distance for notifications
+      updatedLocations.forEach((station) => {
+        if (station.distance <= 10) { // If within 5 km
+          sendNotification(station);
+        }
+      });
     }
-  }, [location, searchQuery, showList]);
+  }, [location, chargingStation]);
+
+  const sendNotification = async (station: any) => {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: 'Nearby Charging Station',
+        body: `A charging station (${station.addressInfo.title}) is within 5 km from you!`,
+        data: { stationId: station.uuid },
+      },
+      trigger: null,
+    });
+  };
+
 
   const theme = useColorScheme() ?? 'light';
 
-  const handleLocationSelect = (loc: LocationObject) => {
+  const handleLocationSelect = (loc: any) => {
     mapRef?.current?.animateToRegion({
-      latitude: loc.latitude,
-      longitude: loc.longitude,
+      latitude: loc.addressInfo.latitude,
+      longitude: loc.addressInfo.longitude,
       latitudeDelta: 0.005,
       longitudeDelta: 0.005,
     }, 1000);
   };
 
   const handleNavigateToLocation = (loc: LocationObject) => {
-    const scheme = Platform.OS === 'ios' ? 'maps:' : 'geo:';
-    const url = `${scheme}${loc.latitude},${loc.longitude}?q=${loc.latitude},${loc.longitude}`;
-
-    Linking.openURL(url);
+    openLocationInMap(loc.latitude, loc.longitude);
   };
 
   const toggleListVisibility = () => {
     setShowList(!showList);
   };
 
-  useEffect(()=>{
-    getDataFromOpenChargeMap().then((data) => {
+  useEffect(() => {
+    if (hasFetched.current) return; // If already fetched, skip
+
+    const fetchChargingStation = async () => {
+      const data = await getChargingStation();
       if (data) {
-        const list = data?.map((item : any) =>{
-          return {
-            latitude : item.AddressInfo.Latitude,
-            longitude: item.AddressInfo.Longitude,
-            id: item.ID,
-            name:item.AddressInfo.Title
-          }
-        })
-        setResponseLocations(data)
-        setListLocations(list)
-      } else {
-          console.log('Gagal mendapatkan data dari API OpenChargeMap.');
+        setChargingStation(data);
+        hasFetched.current = true; // Set ref to true to avoid re-fetch
       }
-    })
-    },[])
+    };
 
-const memoizedMarkers = useMemo(() => {
-  return listLocations?.map((item :LocationObject) => {
-    const selectedLocation = responseLocations.find((loc: ChargingPoint) => loc?.ID === item?.id);
-
-    const onPressMarker =()=>{
-      setSelectedLocation(item.id)
-      setState({...state, selectedChargingPoint:selectedLocation})
-      router.push('location-detail')
-    }
-    return (
-      <Marker
-        key={item.id}
-        coordinate={{
-          latitude: item.latitude,
-          longitude: item.longitude,
-        }}
-        onPress={onPressMarker}
-      >
-        <LocationMarker />
-      </Marker>
-    );
-  });
-}, [listLocations]);
+    fetchChargingStation();
+  }, []);
 
 
-  const renderLocationList =()=>{
-    const listSearchLocation = filteredLocations.filter(loc => loc.name.toLowerCase().includes(searchQuery.toLowerCase()) || [])
-    if(listSearchLocation.length > 0){
-      return(
-        <FlatList
-        style={{ height: '40%' }}
-        data={listSearchLocation}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <View>
-            <TouchableOpacity onPress={() => handleLocationSelect(item)} style={styles.listItem}>
-              <Ionicons name="location-outline" size={24} color={Colors[theme].text} />
-              <ThemedText style={styles.listText}>{item.name} - {item.distance?.toFixed(2)} km</ThemedText>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => handleNavigateToLocation(item)} style={styles.navigateButton}>
-              <Ionicons name="navigate-outline" size={24} color={Colors[theme].text} />
-              <ThemedText style={styles.listText}>Navigate</ThemedText>
-            </TouchableOpacity>
-          </View>
-        )}
-        />
-      )
-    }else{
-      return(
-        <ThemedView>
-          <ActivityIndicator size={20}/>
-        </ThemedView>
-      )
-    }
-  }
+  const memoizedMarkers = useMemo(() => {
+    return chargingStation?.map((item: any) => {
+      const selectedLocation = chargingStation.find((loc: any) => loc?.uuid === item?.uuid);
+
+      const onPressMarker = () => {
+        setState({ ...state, selectedChargingPoint: selectedLocation })
+        router.push('location-detail')
+      }
+      return (
+        <Marker
+          key={item.uuid}
+          coordinate={{
+            latitude: item.addressInfo.latitude,
+            longitude: item.addressInfo.longitude,
+          }}
+          onPress={onPressMarker}
+        >
+          <IconChargingLocation />
+        </Marker>
+      );
+    });
+  }, [chargingStation]);
 
   return (
     <ThemedView style={styles.container}>
@@ -244,32 +187,29 @@ const memoizedMarkers = useMemo(() => {
             {memoizedMarkers}
           </MapView>
         ) : (
-          <ThemedText style={styles.loadingText}>Loading location ....</ThemedText>
+          <ThemedView style={{ height: height, display: 'flex', justifyContent: 'center', alignContent: 'center' }}>
+            <ThemedText style={styles.loadingText}>Loading location ....</ThemedText>
+          </ThemedView>
         )}
       </View>
       {showList && (
-        <View style={styles.listContainer}>
-          <View style={styles.searchContainer}>
-            <Ionicons name="search" size={20} color={Colors[theme].text} style={styles.searchIcon} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search locations..."
-              placeholderTextColor="#ccc"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-          </View>
-          {renderLocationList()}
-        </View>
+        <LocationList
+          handleNavigateToLocation={handleNavigateToLocation}
+          handleLocationSelect={handleLocationSelect}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          location={location}
+          filteredLocations={filteredLocations} />
       )}
       <TouchableOpacity style={styles.toggleButton} onPress={toggleListVisibility}>
         <Ionicons name={showList ? 'chevron-down' : 'chevron-up'} size={24} color={Colors[theme].text} />
       </TouchableOpacity>
+      <LoginWarningModal visible={modalLoginWarning} onLoginPress={handleLoginPress} />
     </ThemedView>
   );
 }
 
-const styles = StyleSheet.create({
+export const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F0F2F5',
@@ -328,7 +268,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   loadingText: {
-    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     textAlign: 'center',
@@ -368,15 +307,15 @@ const styles = StyleSheet.create({
   },
   pointContainer: {
     position: 'absolute',
-    left: 2,
-    bottom: 40,
+    left: 5,
+    bottom: 28,
     backgroundColor: 'red',
     borderRadius: 10,
     paddingHorizontal: 5,
     paddingVertical: 2,
   },
   pointText: {
-    fontSize: 12,
+    fontSize: 10,
     color: 'white',
     fontWeight: 'bold',
   },
