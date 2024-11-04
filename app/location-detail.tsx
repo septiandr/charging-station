@@ -108,16 +108,11 @@ const ChargingStationDetails: React.FC<Props> = () => {
 
 
   const handleSaveToFavorites = async () => {
-    console.log("🚀 ~ isFavorite:", isFavorite)
-    console.log("🚀 ~ favoriteId:", favoriteId)
     if(favoriteId && isFavorite){
       const response = await deleteFavorite({id: favoriteId})
-      console.log("🚀 ~ handleSaveToFavorites ~ deleteFavorite:", response)
       if (response?.code == 200) {
         setFavoriteId('')
         setIsFavorite(false)
-        console.log("🚀 ~ isFavorite:", isFavorite)
-        console.log("🚀 ~ favoriteId:", favoriteId)
         return Alert.alert(
           isFavorite ? 'Removed from Favorites' : 'Saved to Favorites',
           `Station ${station.addressInfo.title} has been ${isFavorite ? 'removed' : 'saved'} to your favorites.`,
@@ -127,7 +122,6 @@ const ChargingStationDetails: React.FC<Props> = () => {
 
     const result = mapDataStations(station);
     const response = await addToFavorite({ user_id: userId, data_station: JSON.stringify(result) })
-    console.log("🚀 ~ handleSaveToFavorites ~ addToFavorite:", response)
     if (response.code == 200) {
       setIsFavorite(true)
       setFavoriteId(response.data.$id)

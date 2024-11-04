@@ -6,13 +6,13 @@ export interface InitialDataProps {
     isLogin: boolean
     selectedChargingPoint: ChargingPoint
     user: UserProps;
-    selectedCar :Car
+    selectedCar: Car
 }
 
 export interface UserProps {
     name: string,
     email: string,
-    $id:string
+    $id: string
 }
 
 export const initialData: InitialDataProps = {
@@ -21,7 +21,7 @@ export const initialData: InitialDataProps = {
     user: {
         name: '',
         email: '',
-        $id:''
+        $id: ''
     },
     selectedChargingPoint: {
         IsRecentlyVerified: false,

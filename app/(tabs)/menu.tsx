@@ -1,10 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { StyleSheet, View, TouchableOpacity, Animated, Alert } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, Animated, Alert, Text } from 'react-native';
 import React, { useContext, useRef } from 'react';
 import { useNavigation } from '@react-navigation/native'; // Assuming you're using react-navigation
-
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
 import { removeItem } from '@/utils/localStorage';
 import { LocalStorageKey } from '@/constants/LocalStorageKey';
 import { Context } from '../_layout';
@@ -75,7 +72,7 @@ export default function TabTwoScreen() {
   };
 
   return (
-    <ThemedView style={styles.container}>
+    <View style={styles.container}>
       {menuItems.map((item, index) => {
         const animation = useRef(new Animated.Value(1)).current;
         return (
@@ -88,12 +85,12 @@ export default function TabTwoScreen() {
               style={styles.touchable}
             >
               <Ionicons name={item.icon as IconType} size={24} style={styles.icon} />
-              <ThemedText type="title" style={styles.menuText}>{item.name}</ThemedText>
+              <Text style={styles.menuText}>{item.name}</Text>
             </TouchableOpacity>
           </Animated.View>
         );
       })}
-    </ThemedView>
+    </View>
   );
 }
 

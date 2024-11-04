@@ -1,8 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { View, TouchableOpacity, FlatList, ActivityIndicator, StyleSheet, TextInput, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons'; // Ensure Ionicons is imported
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
 import { ColorPrimary, Colors } from '@/constants/Colors';
 import { Context } from '@/app/_layout';
 import { router } from 'expo-router';
@@ -133,9 +131,9 @@ const LocationList = ({ filteredLocations, searchQuery, location, handleLocation
           onPress={() => setFilterType(type)}
           style={[styles.menuItem, filterType === type && styles.activeMenuItem]}
         >
-          <ThemedText style={styles.menuText}>
+          <Text style={styles.menuText}>
             {type === 'all' ? 'All' : type.charAt(0).toUpperCase() + type.slice(1)}
-          </ThemedText>
+          </Text>
         </TouchableOpacity>
       ))}
     </View>
@@ -145,11 +143,11 @@ const LocationList = ({ filteredLocations, searchQuery, location, handleLocation
     <View key={item.uuid}>
       <TouchableOpacity onPress={() => handleLocationSelect(item)} style={styles.listItem}>
         <Ionicons name="location-outline" size={24} color="#fff" />
-        <ThemedText style={styles.listText}>{item.addressInfo.title} - {item.distance?.toFixed(2)} km</ThemedText>
+        <Text style={styles.listText}>{item.addressInfo.title} - {item.distance?.toFixed(2)} km</Text>
       </TouchableOpacity>
       <TouchableOpacity onPress={() => handleNavigateToLocation(item)} style={styles.navigateButton}>
         <Ionicons name="navigate-outline" size={24} color="#fff" />
-        <ThemedText style={styles.navigateText}>Navigate</ThemedText>
+        <Text style={styles.navigateText}>Navigate</Text>
       </TouchableOpacity>
     </View>
   );
@@ -183,11 +181,11 @@ const LocationList = ({ filteredLocations, searchQuery, location, handleLocation
           renderItem={renderItem}
         />
       ) : (
-        <ThemedView style={styles.loadingContainer}>
+        <View style={styles.loadingContainer}>
                 {filterType === 'recommendation' && <Text>Car Not Selected</Text>}
                 {filterType === 'favorite' && <Text>No Selected Favorite</Text>}
           {/* <ActivityIndicator size="large" color="#0a7ea4" /> */}
-        </ThemedView>
+        </View>
       )}
     </View>
   );

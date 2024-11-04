@@ -18,7 +18,6 @@ interface LoginValues {
 
 const LoginScreen: React.FC = () => {
     const { state, setState } = useContext(Context);
-    console.log("🚀 ~ state:", state)
     const [isRegister, setIsRegister] = useState(false);
     const title = isRegister ? 'Registration' : 'Login';
 
@@ -46,7 +45,6 @@ const LoginScreen: React.FC = () => {
         // saveItem(LocalStorageKey.user,payload)
         if (isRegister) {
             const response = await register(payload)
-            console.log("🚀 ~ handleLogin ~ payload:", payload)
             if (response?.code === 200) {
                 console.log("🚀 ~ handleLogin ~ response:", response.data)
                 Alert.alert('Registration Successful', `Email: ${values.email}`);

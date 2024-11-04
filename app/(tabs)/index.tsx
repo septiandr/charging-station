@@ -2,15 +2,12 @@ import React, { useEffect, useState, useRef, useMemo, useCallback, useContext } 
 import { StyleSheet, Platform, View, FlatList, TextInput, TouchableOpacity, useColorScheme, Text, ActivityIndicator, Dimensions, SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/Colors';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
 import MapView from 'react-native-map-clustering';
-import { Marker } from 'react-native-maps';
+import { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import * as Location from 'expo-location';
-import * as Linking from 'expo-linking'; // Importing expo-linking
 import { Context } from '../_layout';
 import {getChargingStation } from '@/api/api';
-import { router } from 'expo-router';
+import { router, useFocusEffect} from 'expo-router';
 import IconChargingLocation from '@/assets/images';
 import LoginWarningModal from '@/components/modal/LoginWarningModal';
 import LocationList from '@/components/LocationList';
@@ -39,11 +36,26 @@ export default function HomeScreen() {
   const [modalLoginWarning, setModalLoginWarning] = useState(false)
   const [chargingStation, setChargingStation] = useState([]);
   const hasFetched = useRef(false);
+  const isLogin = state.isLogin
+
+  useFocusEffect(
+    useCallback(() => {
+      console.log('Hello, I am focused!');
+      checkUserLoginStatus(state, setModalLoginWarning)
+
+      return () => {
+        console.log('This route is now unfocused.');
+      }
+    }, [])
+  );
+
 
   const mapRef = useRef<any>(null);
 
   useEffect(() => {
-    checkUserLoginStatus(state, setModalLoginWarning)
+    if(!isLogin){
+        checkUserLoginStatus(state, setModalLoginWarning)
+    }
   }, [])
 
   const handleLoginPress = () => {
@@ -61,6 +73,7 @@ export default function HomeScreen() {
       }, 1000);
     }
   }, [state.isClickLocation])
+
   const getLocation = async () => {
     const currentLocation = await requestLocationPermission();
     if (currentLocation) setLocation(currentLocation);
@@ -84,7 +97,7 @@ export default function HomeScreen() {
 
       // Check distance for notifications
       updatedLocations.forEach((station) => {
-        if (station.distance <= 10) { // If within 5 km
+        if (station.distance <= 5) { // If within 5 km
           sendNotification(station);
         }
       });
@@ -114,8 +127,8 @@ export default function HomeScreen() {
     }, 1000);
   };
 
-  const handleNavigateToLocation = (loc: LocationObject) => {
-    openLocationInMap(loc.latitude, loc.longitude);
+  const handleNavigateToLocation = (loc: any) => {
+    openLocationInMap(loc.addressInfo.latitude, loc.addressInfo.longitude);
   };
 
   const toggleListVisibility = () => {
@@ -161,12 +174,13 @@ export default function HomeScreen() {
   }, [chargingStation]);
 
   return (
-    <ThemedView style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.mapContainer}>
         {location ? (
           <MapView
             renderCluster={renderClusterMarker}
             style={{ flex: 1 }}
+            provider={PROVIDER_GOOGLE}  
             initialRegion={{
               latitude: location?.coords?.latitude,
               longitude: location?.coords?.longitude,
@@ -187,9 +201,9 @@ export default function HomeScreen() {
             {memoizedMarkers}
           </MapView>
         ) : (
-          <ThemedView style={{ height: height, display: 'flex', justifyContent: 'center', alignContent: 'center' }}>
-            <ThemedText style={styles.loadingText}>Loading location ....</ThemedText>
-          </ThemedView>
+          <View style={{ height: height, display: 'flex', justifyContent: 'center', alignContent: 'center' }}>
+            <Text style={styles.loadingText}>Loading location ....</Text>
+          </View>
         )}
       </View>
       {showList && (
@@ -204,8 +218,8 @@ export default function HomeScreen() {
       <TouchableOpacity style={styles.toggleButton} onPress={toggleListVisibility}>
         <Ionicons name={showList ? 'chevron-down' : 'chevron-up'} size={24} color={Colors[theme].text} />
       </TouchableOpacity>
-      <LoginWarningModal visible={modalLoginWarning} onLoginPress={handleLoginPress} />
-    </ThemedView>
+      {!isLogin && <LoginWarningModal visible={modalLoginWarning} onLoginPress={handleLoginPress} />}
+    </View>
   );
 }
 

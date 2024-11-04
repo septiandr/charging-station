@@ -4,24 +4,41 @@
     "slug": "power-route-ev",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon-PREV.png",
+    "icon": "./assets/images/logo.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/PowerRouteEV.png",
       "resizeMode": "contain",
       "backgroundColor": "#0A7EA4"
-    },
+  },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.power.route"
+      "bundleIdentifier": "com.power.route",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "We need your location to show nearby points of interest.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "We need your location to provide continuous location tracking.",
+        "GMSApiKey": "AIzaSyBKM0vgP9KfuMqmu1RjFZO4uqR1VL2SKbQ"
+      }
     },
     "android": {
       "package": "com.power.route",
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/icon-PREV.png",
+        "foregroundImage": "./assets/images/logo.png",
         "backgroundColor": "#0A7EA4"
+      },
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE",
+        "USE_FULL_SCREEN_INTENT"
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyBKM0vgP9KfuMqmu1RjFZO4uqR1VL2SKbQ"
+        }
       }
     },
     "web": {
@@ -34,6 +51,11 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "27b58b2e-e164-45aa-ad9b-5d0e55ac6cd1"
+      }
     }
   }
 }

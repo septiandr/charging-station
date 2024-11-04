@@ -1,4 +1,4 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { DarkTheme, DefaultTheme, NavigationContainer, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -9,7 +9,7 @@ import { InitialDataProps, initialData } from './initialValueStore';
 import { getItem } from '@/utils/localStorage';
 import { LocalStorageKey } from '@/constants/LocalStorageKey';
 import { registerForPushNotificationsAsync } from '@/utils/requestPermission';
-import { Platform } from 'react-native';
+import { Platform, View } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { startLocationUpdates } from '@/utils/backgroundFetch';
 
@@ -39,33 +39,33 @@ export default function RootLayout() {
     const subscription = Notifications.addNotificationReceivedListener(notification => {
       console.log('Notification received:', notification);
     });
-  
+
     return () => subscription.remove();
   }, []);
-  
-  
+
+
 
   const getDataFromLocalStorage = async () => {
     const user = await getItem(LocalStorageKey.user);
-    setState({...state, user:user})
+    setState({ ...state, user: user })
   };
 
 
 
 
-useEffect(() => {
-  registerForPushNotificationsAsync()
+  useEffect(() => {
+    registerForPushNotificationsAsync()
 
-  if (Platform.OS === 'android') {
-    Notifications.setNotificationChannelAsync('default', {
+    if (Platform.OS === 'android') {
+      Notifications.setNotificationChannelAsync('default', {
         name: 'default',
         importance: Notifications.AndroidImportance.MAX,
         vibrationPattern: [0, 250, 250, 250],
         lightColor: '#FF231F7C',
-    });
-}
+      });
+    }
 
-}, []);
+  }, []);
 
   useEffect(() => {
     getDataFromLocalStorage()
@@ -80,7 +80,6 @@ useEffect(() => {
 
   return (
     <Context.Provider value={{ state, setState }}>
-      <ThemeProvider value={DefaultTheme}>
         <Stack>
           <Stack.Screen name="login" options={{ headerShown: false }} />
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -89,7 +88,6 @@ useEffect(() => {
           <Stack.Screen name="profile" options={{ headerShown: false }} />
           <Stack.Screen name="help" options={{ headerShown: true }} />
         </Stack>
-      </ThemeProvider>
-    </Context.Provider>
+  </Context.Provider>
   );
 }
