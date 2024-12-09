@@ -10,8 +10,6 @@ export const requestLocationPermission = async () => {
 };
 
 export const openLocationInMap = (latitude: any, longitude: any) => {
-  console.log("🚀 ~ openLocationInMap ~ longitude:", longitude)
-  console.log("🚀 ~ openLocationInMap ~ latitude:", latitude)
   const scheme = Platform.OS === 'ios' ? 'maps:' : 'geo:';
   const url = `${scheme}${latitude},${longitude}?q=${latitude},${longitude}`;
   Linking.openURL(url);

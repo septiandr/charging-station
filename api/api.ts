@@ -31,7 +31,6 @@ export const getChargingStation = async () => {
     try {
         const { data } = await axios.get(`https://671583f6b6d5d53a2c0e.appwrite.global/list-charging`)
 
-        console.log("🚀 ~ getChargingStation ~ data:", data)
         if (data?.code === 200) {
             return data.data;
         }
@@ -47,31 +46,24 @@ export const login = async (request: { password: string, email: string }) => {
     try {
         const response = await axios.post(`${endPoint}${api.login}`, request);
 
-        if (response?.data?.code === 200) {
-            return response?.data;
-        }
+        return response?.data;
 
-        throw new Error(response?.data?.message || 'Unexpected response');
 
     } catch (error) {
-        console.error('Error fetching charging stations:', error);
-        return null;
+        console.log('Error fetching charging stations:', error);
+        return error;
     }
 };
 export const register = async (request: { password: string, email: string, name:string }) => {
     try {
         const response = await axios.post(`${endPoint}${api.register}`, request);
 
-        console.log("🚀 ~ register ~ response:", response)
-        if (response?.data?.code === 200) {
-            return response?.data;
-        }
+        return response?.data;
 
-        throw new Error(response?.data?.message || 'Unexpected response');
 
     } catch (error) {
         console.error('Error fetching charging stations:', error);
-        return null;
+        return error;
     }
 };
 export const addCar = async (request: { user_id: string, car_data: string }) => {
@@ -153,7 +145,6 @@ export const deleteFavorite = async (request: { id:string}) => {
     try {
         const response = await axios.post(`${endPoint}/delete-user-favorite`, request);
 
-        console.log("🚀 ~ deleteFavorite ~ response:", response)
         if (response?.data?.code === 200) {
             return response?.data;
         }

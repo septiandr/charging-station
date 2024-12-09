@@ -51,7 +51,6 @@ const ChargingStationDetails: React.FC<Props> = () => {
   const station: Station = state.selectedChargingPoint;
   const primaryColor = '#0A7EA4';
   const [isFavorite, setIsFavorite] = useState(false); // To manage favorite status
-  console.log("🚀 ~ isFavorite main:", isFavorite)
   const [favoriteId, setFavoriteId] = useState(''); // To manage favorite statu
   const [userId, setUserId] = useState('')
 

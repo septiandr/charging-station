@@ -32,7 +32,6 @@ const currentType = {
 };
 
 const AddCarModal: React.FC<AddCarModalProps> = ({ visible, onAdd, onCancel }) => {
-  console.log("🚀 ~ visible:", visible)
   const [carName, setCarName] = useState<string>("");
   const [carPower, setCarPower] = useState<string>("");
   const [selectedConnectionType, setSelectedConnectionType] = useState<number | null>(null);

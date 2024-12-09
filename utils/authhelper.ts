@@ -8,7 +8,5 @@ import { useContext } from 'react';
 export const checkUserLoginStatus = async (state : any, setModalLoginWarning : any) => {
 
   const isLogin = await getItem(LocalStorageKey.user);
-  console.log("🚀 ~ checkUserLoginStatus ~ isLogin:", isLogin)
-
   setModalLoginWarning(!isLogin?.email && !state.isLogin);
 };

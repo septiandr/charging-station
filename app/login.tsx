@@ -46,27 +46,23 @@ const LoginScreen: React.FC = () => {
         if (isRegister) {
             const response = await register(payload)
             if (response?.code === 200) {
-                console.log("🚀 ~ handleLogin ~ response:", response.data)
                 Alert.alert('Registration Successful', `Email: ${values.email}`);
                 router.push('profile')
                 setState({ ...state, isLogin: true });
                 saveItem(LocalStorageKey.user, response.data)
             } else {
-                console.log("🚀 ~ handleLogin ~ response?.data?.message:", response)
-                Alert.alert('Register', response?.data?.message);
+                Alert.alert('Register', response?.message);
             }
         } else {
             const req = { email: values.email, password: values.password };
             const response = await login(req)
             if (response?.code === 200) {
-                console.log("🚀 ~ handleLogin ~ response:", response)
                 Alert.alert('Login Successful', `Email: ${values.email}`);
                 router.push('(tabs)');
                 setState({ ...state, isLogin: true });
                 saveItem(LocalStorageKey.user, response.data[0])
             } else {
-                console.log(response)
-                Alert.alert('Login', response?.data?.message);
+                Alert.alert('Login', response?.message);
             }
 
         }
@@ -162,8 +158,7 @@ const LoginScreen: React.FC = () => {
                                     opacity: isValid ? 1 : 0.6
                                 }
                             ]}
-                            disabled={!isValid}
-                            onPress={isValid ? handleSubmit as any : () => { }}
+                            onPress={ handleSubmit as any}
                         >
                             <Text style={styles.buttonText}>{title}</Text>
                         </TouchableOpacity>

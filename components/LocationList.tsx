@@ -114,7 +114,6 @@ const LocationList = ({ filteredLocations, searchQuery, location, handleLocation
         longitude: location?.coords.longitude,
       }
       filteredList = mergeDataStationsWithDistance(favorites,coord)
-      console.log("🚀 ~ getFilteredLocations ~ filteredList:", filteredList)
     }
 
     return filteredList;
